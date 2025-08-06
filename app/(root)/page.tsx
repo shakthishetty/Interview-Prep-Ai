@@ -3,8 +3,8 @@ import Link from "next/link";
 
 import InterviewCard from "@/components/InterviewCard";
 import { Button } from "@/components/ui/button";
-
-import { getCurrentUser, getInterviewByUserId, getLatestInterviews } from "@/lib/actions/auth.action";
+import { getCurrentUser } from "@/lib/actions/auth.action";
+import { getInterviewByUserId, getLatestInterviews } from "@/lib/actions/general.action";
 
 
 async function Home() {

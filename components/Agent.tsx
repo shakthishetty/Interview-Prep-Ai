@@ -1,5 +1,6 @@
 "use client";
 
+import { interviewer } from "@/constants";
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
 import Image from "next/image";
@@ -18,8 +19,24 @@ interface SavedMessage{
     content: string;
 }
 
-const Agent = ({ userName ,userId,type, questions}:AgentProps) => {
+const Agent = ({ userName ,userId,type, questions,interviewId}:AgentProps) => {
     const router = useRouter();
+
+    // Validate required props
+    if (!userName) {
+        console.error("Agent: userName is required");
+        return <div>Error: User name is required</div>;
+    }
+
+    if (!process.env.NEXT_PUBLIC_VAPI_WEB_TOKEN) {
+        console.error("Agent: VAPI Web Token is not configured");
+        return <div>Error: VAPI is not configured. Please check your environment variables.</div>;
+    }
+
+    if (type === "interview" && (!questions || questions.length === 0)) {
+        console.error("Agent: questions are required for interview type");
+        return <div>Error: Interview questions are required</div>;
+    }
 
     const [isSpeaking, setIsSpeaking] = useState(false);
      
@@ -42,9 +59,13 @@ const Agent = ({ userName ,userId,type, questions}:AgentProps) => {
     }
         const onSpeechStart = () => setIsSpeaking(true);
         const onSpeechEnd = () => setIsSpeaking(false);
-        const onError = (error: Error) => {
+        const onError = (error: any) => {
             console.error("Error in Agent component:", error);
-          
+            console.error("Error type:", typeof error);
+            console.error("Error details:", JSON.stringify(error, null, 2));
+            
+            // Reset call status on error
+            setCallStatus(CallStatus.INACTIVE);
         }
 
         vapi.on('call-start', onCallStart);
@@ -64,9 +85,31 @@ const Agent = ({ userName ,userId,type, questions}:AgentProps) => {
         }
     }, []);
 
+    const handleGenerateFeedback = async (messages: SavedMessage[]) => {
+          console.log("Generating feedback with messages:", messages);
+           const {success,id} = {
+               success: true,
+               id: "feedback-id"
+
+           }
+
+           if(success && id){
+            router.push(`/interview/${interviewId}/feedback/`);
+           }else{
+            console.error("Failed to generate feedback");
+             router.push("/")
+           }
+    }
+
     useEffect(() => {
-        if(callStatus === CallStatus.FINISHED) router.push('/');
-    },[callStatus,messages,type,userId])
+        if(callStatus === CallStatus.FINISHED) {
+           if(type === "generate"){
+              router.push("/")
+           } else {
+               handleGenerateFeedback(messages);
+           }
+        }
+    },[callStatus,messages,type,interviewId])
 
   const handleDisconnect = () => {
     vapi.stop();
@@ -74,34 +117,59 @@ const Agent = ({ userName ,userId,type, questions}:AgentProps) => {
   };
 
   const handleCall = async () => {
-    setCallStatus(CallStatus.CONNECTING);
+    try {
+      setCallStatus(CallStatus.CONNECTING);
 
-    if (type === "generate") {
-      await vapi.start(
-        undefined,
-        undefined,
-        undefined,
-        process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!,
-        {
-          variableValues: {
-            username: userName,
-            userid: userId,
-          },
+      if (type === "generate") {
+        const workflowId = process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID;
+        if (!workflowId) {
+          throw new Error("VAPI Workflow ID is not configured");
         }
-      );
-    } else {
-      let formattedQuestions = "";
-      if (questions) {
-        formattedQuestions = questions
-          .map((question) => `- ${question}`)
-          .join("\n");
-      }
 
-      await vapi.start(undefined, {
-        variableValues: {
-          questions: formattedQuestions,
-        },
-      });
+        console.log("Starting VAPI call for generation with:", {
+          userName,
+          userId,
+          workflowId
+        });
+
+        await vapi.start(
+          undefined,
+          undefined,
+          undefined,
+          workflowId,
+          {
+            variableValues: {
+              username: userName,
+              userid: userId,
+            },
+          }
+        );
+      } else {
+        let formattedQuestions = "";
+        if (questions && questions.length > 0) {
+          formattedQuestions = questions
+            .map((question) => `- ${question}`)
+            .join("\n");
+        }
+
+        if (!formattedQuestions) {
+          throw new Error("No questions available for the interview");
+        }
+
+        console.log("Starting VAPI call for interview with questions:", formattedQuestions);
+
+        await vapi.start(interviewer, {
+          variableValues: {
+            questions: formattedQuestions,
+          },
+        });
+      }
+    } catch (error: any) {
+      console.error("Error starting VAPI call:", error);
+      console.error("Error type:", typeof error);
+      console.error("Error message:", error?.message || "Unknown error");
+      console.error("Error stack:", error?.stack || "No stack trace");
+      setCallStatus(CallStatus.INACTIVE);
     }
   };
 
