@@ -42,6 +42,9 @@ interface User {
   name: string;
   email: string;
   id: string;
+  hasPaid?: boolean;
+  stripeCustomerId?: string;
+  paymentDate?: string;
 }
 
 interface InterviewCardProps {

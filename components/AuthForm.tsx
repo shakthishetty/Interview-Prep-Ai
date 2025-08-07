@@ -5,7 +5,7 @@ import {
   Form
 } from "@/components/ui/form"
 import { auth } from "@/firebase/client"
-import { signIn, signUp } from "@/lib/actions/auth.action"
+import { checkUserPaymentStatus, signIn, signUp } from "@/lib/actions/auth.action"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth"
 import Image from "next/image"
@@ -68,12 +68,26 @@ const AuthForm = ({ type }: {type:FormType}) => {
             toast.error("Sign in failed. Please try again.")
             return
           }
-          await signIn({
+          const signInResult = await signIn({
             email,
             idToken
           })
-        toast.success("Signed in successfully!")
-        router.push('/')
+          
+          if (!signInResult.success) {
+            toast.error(signInResult.message)
+            return
+          }
+
+          toast.success("Signed in successfully!")
+          
+          // Check if user needs to make payment
+          const { needsPayment } = await checkUserPaymentStatus();
+          
+          if (needsPayment) {
+            router.push('/payment');
+          } else {
+            router.push('/');
+          }
       }
      } catch (error) {
        toast.error("Something went wrong.")

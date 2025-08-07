@@ -88,13 +88,9 @@ const Agent = ({ userName ,userId,type, questions,interviewId}:AgentProps) => {
 
     const handleGenerateFeedback = async (messages: SavedMessage[]) => {
           console.log("Generating feedback with messages:", messages);
-          console.log("Messages length:", messages.length);
-          console.log("InterviewId:", interviewId);
-          console.log("UserId:", userId);
           
           if (!interviewId || !userId) {
             console.error("Missing interviewId or userId for feedback generation");
-            console.error("InterviewId:", interviewId, "UserId:", userId);
             router.push("/");
             return;
           }
@@ -106,31 +102,21 @@ const Agent = ({ userName ,userId,type, questions,interviewId}:AgentProps) => {
           }
 
           try {
-            console.log("Calling createFeedback with:", {
-              interviewId,
-              userId,
-              transcriptLength: messages.length
-            });
-
-            const {success, feedbackId, error} = await createFeedback({
+            const {success, feedbackId} = await createFeedback({
               interviewId: interviewId!,
               userId: userId!,
               transcript: messages,
             });
 
-            console.log("createFeedback result:", {success, feedbackId, error});
-
             if(success && feedbackId){
               console.log("Feedback generated successfully:", feedbackId);
               router.push(`/interview/${interviewId}/feedback`);
             } else {
-              console.error("Failed to generate feedback:", error || "Unknown error");
+              console.error("Failed to generate feedback");
               router.push("/");
             }
           } catch (error) {
             console.error("Error generating feedback:", error);
-            console.error("Error type:", typeof error);
-            console.error("Error message:", error instanceof Error ? error.message : "Unknown error");
             router.push("/");
           }
     }
@@ -228,11 +214,9 @@ const Agent = ({ userName ,userId,type, questions,interviewId}:AgentProps) => {
 
         <div className="card-border">
                     <div className="card-content">
-                   <Image 
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&size=120&background=6366f1&color=fff&rounded=true&bold=true`}
-                    alt={`${userName}-avatar`}
-                    width={120}
-                    height={120}
+                   <Image src="/user-avatar.png" alt="user-avatar"
+                    width={540}
+                    height={540}
                     className="rounded-full object-cover size-[120px]"
                     />
                     <h3>{userName}</h3>

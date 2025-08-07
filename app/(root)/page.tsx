@@ -3,12 +3,22 @@ import Link from "next/link";
 
 import InterviewCard from "@/components/InterviewCard";
 import { Button } from "@/components/ui/button";
-import { getCurrentUser } from "@/lib/actions/auth.action";
+import { checkUserPaymentStatus } from "@/lib/actions/auth.action";
 import { getInterviewByUserId, getLatestInterviews } from "@/lib/actions/general.action";
+import { redirect } from "next/navigation";
 
 
 async function Home() {
-  const user = await getCurrentUser();
+  // Check payment status first
+  const { needsPayment, user } = await checkUserPaymentStatus();
+  
+  if (!user) {
+    redirect('/sign-in');
+  }
+  
+  if (needsPayment) {
+    redirect('/payment');
+  }
 
   const [userInterviews, allInterview] = await Promise.all([
     getInterviewByUserId(user?.id!),

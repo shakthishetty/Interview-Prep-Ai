@@ -17,7 +17,10 @@ export async function signUp(params:SignUpParams) {
             }
              await db.collection('users').doc(uid).set({
                 name,
-                email, 
+                email,
+                hasPaid: false,
+                stripeCustomerId: null,
+                paymentDate: null,
             });
             return {
                 success: true,
@@ -107,5 +110,18 @@ export async function getCurrentUser(): Promise<User | null> {
 export async function isAuthenticated(){
     const user = await getCurrentUser();
     return !!user;
+}
+
+export async function checkUserPaymentStatus(): Promise<{ needsPayment: boolean; user: User | null }> {
+    const user = await getCurrentUser();
+    
+    if (!user) {
+        return { needsPayment: false, user: null };
+    }
+    
+    // If user hasn't paid, they need to make payment
+    const needsPayment = !user.hasPaid;
+    
+    return { needsPayment, user };
 }
 
