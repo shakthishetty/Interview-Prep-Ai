@@ -13,7 +13,7 @@ export const createAdvancedCheckoutSession = async (stripe: any, params: {
     // Enable multiple payment methods including Google Pay and Apple Pay
     // Note: Google Pay and Apple Pay are automatically enabled when 'card' is included
     payment_method_types: [
-      'card',           // Credit/Debit cards (includes Google Pay, Apple Pay automatically)
+      'card'      // Credit/Debit cards (includes Google Pay, Apple Pay automatically)
     ],
     
     // Line items

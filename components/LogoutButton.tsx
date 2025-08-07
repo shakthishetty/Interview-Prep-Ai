@@ -1,6 +1,7 @@
 "use client";
 
 import { logout } from '@/lib/actions/auth.action';
+import { oauthService } from '@/lib/oauth';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -14,6 +15,10 @@ function LogoutButton() {
     try {
       setIsLoading(true);
       
+      // Sign out from Firebase (OAuth)
+      await oauthService.signOut();
+      
+      // Sign out from server session
       const result = await logout();
       
       if (result.success) {
