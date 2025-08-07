@@ -1,37 +1,18 @@
 "use client";
 
-import { logout } from '@/lib/actions/auth.action';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
-function LogoutButton() {
+function LogoutButtonNew() {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
-  const handleLogout = async () => {
-    try {
-      setIsLoading(true);
-      
-      const result = await logout();
-      
-      if (result.success) {
-        toast.success('Logged out successfully');
-        router.push('/sign-in');
-        router.refresh();
-      } else {
-        toast.error(result.message);
-      }
-    } catch (error) {
-      toast.error('Failed to logout. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleClick = () => {
+    setIsLoading(!isLoading);
+    console.log("Logout clicked");
   };
 
   return (
     <button
-      onClick={handleLogout}
+      onClick={handleClick}
       disabled={isLoading}
       className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors duration-200 disabled:opacity-50"
       title="Logout"
@@ -58,4 +39,4 @@ function LogoutButton() {
   );
 }
 
-export default LogoutButton;
+export default LogoutButtonNew;
