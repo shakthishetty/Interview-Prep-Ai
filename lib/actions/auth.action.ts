@@ -125,3 +125,21 @@ export async function checkUserPaymentStatus(): Promise<{ needsPayment: boolean;
     return { needsPayment, user };
 }
 
+export async function logout() {
+    const cookieStore = await cookies();
+    try {
+        // Remove the session cookie
+        cookieStore.delete('session');
+        return {
+            success: true,
+            message: "User logged out successfully."
+        }
+    } catch (e: any) {
+        console.log("Error logging out:", e);
+        return {
+            success: false,
+            message: "Error logging out. Please try again."
+        }
+    }
+}
+
