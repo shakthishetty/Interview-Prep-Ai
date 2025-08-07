@@ -228,9 +228,11 @@ const Agent = ({ userName ,userId,type, questions,interviewId}:AgentProps) => {
 
         <div className="card-border">
                     <div className="card-content">
-                   <Image src="/user-avatar.png" alt="user-avatar"
-                    width={540}
-                    height={540}
+                   <Image 
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&size=120&background=6366f1&color=fff&rounded=true&bold=true`}
+                    alt={`${userName}-avatar`}
+                    width={120}
+                    height={120}
                     className="rounded-full object-cover size-[120px]"
                     />
                     <h3>{userName}</h3>
