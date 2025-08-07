@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+// Fixed React component error by restructuring export pattern
 function LogoutButton() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
