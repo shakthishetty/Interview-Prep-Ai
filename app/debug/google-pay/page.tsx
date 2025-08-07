@@ -153,6 +153,10 @@ export default function GooglePayDebugPage() {
     }
   };
 
+  const runGooglePayTests = async () => {
+    setIsLoading(true);
+    const results: any = {};
+
     // Test 1: Check if Google Pay API is available
     try {
       if (window.google && window.google.payments && window.google.payments.api) {
@@ -198,7 +202,7 @@ export default function GooglePayDebugPage() {
     results.supportedDomain = window.location.hostname === 'localhost' || window.location.protocol === 'https:';
 
     setTestResults(results);
-    setLoading(false);
+    setIsLoading(false);
   };
 
   return (
@@ -208,10 +212,10 @@ export default function GooglePayDebugPage() {
       <div className="mb-6 text-center">
         <button
           onClick={runGooglePayTests}
-          disabled={loading}
+          disabled={isLoading}
           className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
         >
-          {loading ? 'Testing...' : 'Run Google Pay Tests'}
+          {isLoading ? 'Testing...' : 'Run Google Pay Tests'}
         </button>
       </div>
 
