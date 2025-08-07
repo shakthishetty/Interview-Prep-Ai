@@ -1,6 +1,7 @@
 "use client";
 
 import { interviewer } from "@/constants";
+import { createFeedback } from "@/lib/actions/general.action";
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
 import Image from "next/image";
@@ -87,18 +88,51 @@ const Agent = ({ userName ,userId,type, questions,interviewId}:AgentProps) => {
 
     const handleGenerateFeedback = async (messages: SavedMessage[]) => {
           console.log("Generating feedback with messages:", messages);
-           const {success,id} = {
-               success: true,
-               id: "feedback-id"
+          console.log("Messages length:", messages.length);
+          console.log("InterviewId:", interviewId);
+          console.log("UserId:", userId);
+          
+          if (!interviewId || !userId) {
+            console.error("Missing interviewId or userId for feedback generation");
+            console.error("InterviewId:", interviewId, "UserId:", userId);
+            router.push("/");
+            return;
+          }
 
-           }
+          if (messages.length === 0) {
+            console.error("No messages available for feedback generation");
+            router.push("/");
+            return;
+          }
 
-           if(success && id){
-            router.push(`/interview/${interviewId}/feedback/`);
-           }else{
-            console.error("Failed to generate feedback");
-             router.push("/")
-           }
+          try {
+            console.log("Calling createFeedback with:", {
+              interviewId,
+              userId,
+              transcriptLength: messages.length
+            });
+
+            const {success, feedbackId, error} = await createFeedback({
+              interviewId: interviewId!,
+              userId: userId!,
+              transcript: messages,
+            });
+
+            console.log("createFeedback result:", {success, feedbackId, error});
+
+            if(success && feedbackId){
+              console.log("Feedback generated successfully:", feedbackId);
+              router.push(`/interview/${interviewId}/feedback`);
+            } else {
+              console.error("Failed to generate feedback:", error || "Unknown error");
+              router.push("/");
+            }
+          } catch (error) {
+            console.error("Error generating feedback:", error);
+            console.error("Error type:", typeof error);
+            console.error("Error message:", error instanceof Error ? error.message : "Unknown error");
+            router.push("/");
+          }
     }
 
     useEffect(() => {
