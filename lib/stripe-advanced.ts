@@ -10,16 +10,11 @@ export const createAdvancedCheckoutSession = async (stripe: any, params: {
 
   // Create the checkout session with advanced payment methods
   const session = await stripe.checkout.sessions.create({
-    // Enable multiple payment methods including Google Pay
+    // Enable multiple payment methods including Google Pay and Apple Pay
+    // Note: Google Pay and Apple Pay are automatically enabled when 'card' is included
     payment_method_types: [
       'card',           // Credit/Debit cards (includes Google Pay, Apple Pay automatically)
-      'link',          // Stripe Link (one-click payments)
     ],
-    
-    // Enable automatic payment methods for better Google Pay support
-    automatic_payment_methods: {
-      enabled: true,
-    },
     
     // Line items
     line_items: [
@@ -46,15 +41,8 @@ export const createAdvancedCheckoutSession = async (stripe: any, params: {
     // Enhanced checkout features
     billing_address_collection: 'auto',
     
-    // Customer data
+    // Customer data  
     customer_creation: 'always', // Always create a customer record
-    
-    // Payment method options
-    payment_method_options: {
-      card: {
-        request_three_d_secure: 'automatic',
-      },
-    },
     
     // Checkout session options
     expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes

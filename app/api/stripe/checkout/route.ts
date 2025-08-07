@@ -1,5 +1,4 @@
 import { stripe } from '@/lib/stripe';
-import { createAdvancedCheckoutSession } from '@/lib/stripe-advanced';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
@@ -46,13 +45,36 @@ export async function POST(request: NextRequest) {
     console.log('Success URL:', successUrl);
     console.log('Cancel URL:', cancelUrl);
     
-    // Create advanced checkout session with multiple payment methods
-    const session = await createAdvancedCheckoutSession(stripe, {
-      userId,
-      userEmail,
-      userName,
-      successUrl,
-      cancelUrl,
+    // Create simple, compatible Stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'], // This automatically includes Google Pay and Apple Pay
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'InterviewPrep - Lifetime Access',
+              description: 'Unlimited AI-powered interview practice with detailed feedback',
+            },
+            unit_amount: 1000, // $10.00 in cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      customer_email: userEmail,
+      client_reference_id: userId,
+      customer_creation: 'always',
+      billing_address_collection: 'auto',
+      expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes
+      metadata: {
+        userId,
+        userName,
+        userEmail,
+        product: 'InterviewPrep-Lifetime-Access',
+      },
     });
 
     console.log('Stripe checkout session created successfully:', session.id);
