@@ -45,9 +45,14 @@ export async function POST(request: NextRequest) {
     console.log('Success URL:', successUrl);
     console.log('Cancel URL:', cancelUrl);
     
-    // Create simple, compatible Stripe checkout session
+    // Create Stripe checkout session with payment methods that support Google Pay
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'], // This automatically includes Google Pay and Apple Pay
+      payment_method_types: [
+        'card',           // This includes Google Pay and Apple Pay when available
+        'link',           // Stripe Link
+        'cashapp',        // Cash App Pay
+        'us_bank_account' // Bank transfers
+      ],
       line_items: [
         {
           price_data: {
@@ -68,6 +73,9 @@ export async function POST(request: NextRequest) {
       client_reference_id: userId,
       customer_creation: 'always',
       billing_address_collection: 'auto',
+      phone_number_collection: {
+        enabled: true,
+      },
       expires_at: Math.floor(Date.now() / 1000) + (30 * 60), // 30 minutes
       metadata: {
         userId,
@@ -75,6 +83,20 @@ export async function POST(request: NextRequest) {
         userEmail,
         product: 'InterviewPrep-Lifetime-Access',
       },
+      // Payment method options optimized for digital wallets
+      payment_method_options: {
+        card: {
+          request_three_d_secure: 'automatic',
+        },
+        us_bank_account: {
+          financial_connections: {
+            permissions: ['payment_method', 'balances'],
+          },
+        },
+      },
+      // Settings that help with Google Pay visibility
+      locale: 'auto',
+      submit_type: 'pay',
     });
 
     console.log('Stripe checkout session created successfully:', session.id);

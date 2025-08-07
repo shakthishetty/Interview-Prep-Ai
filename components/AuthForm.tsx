@@ -15,6 +15,7 @@ import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
 import FormField from "./FormFeild"
+import OAuthButtons from "./OAuthButtons"
 
 
 const AuthFormSchema = (type: FormType) => {
@@ -112,6 +113,11 @@ const AuthForm = ({ type }: {type:FormType}) => {
              <h2 className="text-primary-100">InterviewPrep</h2>
            </div>
             <h3 className="text-center">Ai Powered Interview Preparation with Feedback</h3>
+
+            {/* OAuth Buttons */}
+            <div className="space-y-4">
+              <OAuthButtons mode={isSignIn ? 'signin' : 'signup'} />
+            </div>
 
      <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full form">

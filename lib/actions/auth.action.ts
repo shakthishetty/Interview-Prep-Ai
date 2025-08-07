@@ -84,27 +84,97 @@ export async function signIn(params: SignInParams) {
 
 }
 
+export async function oauthSignIn(userData: { uid: string; name: string; email: string; provider: string }) {
+    const { uid, name, email, provider } = userData;
+    try {
+        // Check if user exists in Firestore
+        const userRecord = await db.collection('users').doc(uid).get();
+        
+        if (!userRecord.exists) {
+            // Create new user for OAuth
+            await db.collection('users').doc(uid).set({
+                name,
+                email,
+                provider,
+                hasPaid: false,
+                stripeCustomerId: null,
+                paymentDate: null,
+                createdAt: new Date().toISOString(),
+            });
+        } else {
+            // Update existing user's last sign-in
+            await db.collection('users').doc(uid).update({
+                name,
+                email,
+                lastSignIn: new Date().toISOString(),
+            });
+        }
+
+        // Create session cookie for OAuth user
+        // Note: For OAuth, we'll need to handle session differently since we don't have an idToken from server
+        // For now, we'll create a simple session
+        const cookieStore = await cookies();
+        cookieStore.set('user_session', JSON.stringify({ uid, email, name }), {
+            maxAge: ONE_WEEK,
+            httpOnly: true,
+            path: '/',
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+        });
+
+        return {
+            success: true,
+            message: "OAuth sign-in successful."
+        };
+    } catch (e: any) {
+        console.log("Error with OAuth sign-in:", e);
+        return {
+            success: false,
+            message: "Error signing in with OAuth. Please try again."
+        };
+    }
+}
+
 export async function getCurrentUser(): Promise<User | null> {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('session')?.value;
+    const userSessionCookie = cookieStore.get('user_session')?.value;
 
-    if (!sessionCookie) {
-        return null;
-    }
-    try{
-        const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-        const userRecord = await db.collection('users').doc(decodedClaims.uid).get();
-        if (!userRecord.exists) {
-            return null;
+    // Check regular session cookie first
+    if (sessionCookie) {
+        try {
+            const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
+            const userRecord = await db.collection('users').doc(decodedClaims.uid).get();
+            if (!userRecord.exists) {
+                return null;
+            }
+            return {
+                ...userRecord.data(),
+                id: userRecord.id,
+            } as User;
+        } catch (e: any) {
+            console.log("Error verifying session cookie:", e);
         }
-        return {
-            ...userRecord.data(),
-            id: userRecord.id,
-        } as User;
-    }catch (e:any) {
-        console.log("Error getting current user:", e);
-        return null;
     }
+
+    // Check OAuth user session cookie
+    if (userSessionCookie) {
+        try {
+            const userData = JSON.parse(userSessionCookie);
+            const userRecord = await db.collection('users').doc(userData.uid).get();
+            if (!userRecord.exists) {
+                return null;
+            }
+            return {
+                ...userRecord.data(),
+                id: userRecord.id,
+            } as User;
+        } catch (e: any) {
+            console.log("Error parsing user session cookie:", e);
+        }
+    }
+
+    return null;
 }
 
 export async function isAuthenticated(){
@@ -128,8 +198,9 @@ export async function checkUserPaymentStatus(): Promise<{ needsPayment: boolean;
 export async function logout() {
     const cookieStore = await cookies();
     try {
-        // Remove the session cookie
+        // Remove both session cookies
         cookieStore.delete('session');
+        cookieStore.delete('user_session');
         return {
             success: true,
             message: "User logged out successfully."
