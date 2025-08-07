@@ -1,4 +1,5 @@
 import { isAuthenticated } from '@/lib/actions/auth.action'
+import LogoutButton from '@/components/LogoutButton'
 import Image from 'next/image'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -12,7 +13,7 @@ const HomePage = async ({children}:{children:ReactNode}) => {
     }
   return (
     <div className='root-layout'>
-        <nav>
+        <nav className='flex items-center justify-between px-4 py-3'>
             <Link href="/" className='flex items-center gap-2'>
                     <Image src="/logo.svg"
                      alt='logo'
@@ -21,6 +22,7 @@ const HomePage = async ({children}:{children:ReactNode}) => {
                      />
                      <h2 className='text-primary-100'>InterviewPrep</h2>
             </Link>
+            <LogoutButton />
         </nav>
         {children}
     </div>
